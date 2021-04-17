@@ -68,7 +68,7 @@ class Math(commands.Cog):
     @commands.command()
     async def solve(self, ctx, operation: str, a: int, b: int):
         """Calculates numbers. Nothing much to say."""
-        answer = calculate(operation, a, b)
+        answer = self.calculate(operation, a, b)
         await ctx.send("Your answer is {}.".format(answer))
 
 
@@ -175,7 +175,7 @@ class Misc(commands.Cog):
         await ctx.send("I can't leave until the computer running me quits the program!")
 
     @commands.command()
-    async def joined(self, ctx, *, member: discord.Member = None):
+    async def joined(self, ctx, *, member: discord.Member):
         """Says when you or someone mentioned joined!"""
         await ctx.send('{0.name} joined in {0.joined_at}.'.format(member))
 
