@@ -196,4 +196,4 @@ class Misc(commands.Cog):
 
 bot.add_cog(Misc(bot))
 
-bot.run('ODE3NDkwMzAwODQxODg1NzY2.YEKRKw.tSbkyAv4aDSPwR7UJ4K21Ttg82E')
+bot.run('Insert token here')
