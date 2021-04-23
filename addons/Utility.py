@@ -7,7 +7,7 @@ class Utility(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=['dm', 'pm'])
-    async def send_dm(self, ctx, member: discord.User, *, content):
+    async def send_dm(self, ctx: commands.Context, member: discord.User, *, content):
         """Sends a DM to someone mentioned."""
         if member == ctx.me:
             return await ctx.send("You cannot send a DM to me!")
@@ -17,7 +17,7 @@ class Utility(commands.Cog):
             return await ctx.send("Failed to send DM to the user. They might have blocked me or aren't accepting DMs. 😢")
 
     @commands.command(aliases=['ticket'])
-    async def send_ticket(self, ctx, member: discord.User, *, content):
+    async def send_ticket(self, ctx: commands.Context, member: discord.User, *, content):
         """Sends a ticket to someone mentioned for support."""
 
         if member == ctx.me:
@@ -29,7 +29,7 @@ class Utility(commands.Cog):
         await ctx.send("Don't worry! Help is on the way!")
 
     @commands.command()
-    async def rules(self, ctx):
+    async def rules(self, ctx: commands.Context):
         """Prints out all the rules."""
         if os.path.exists("saves/rules.txt"):
             with open("saves/rules.txt", "r") as fil:

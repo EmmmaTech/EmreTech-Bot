@@ -11,7 +11,7 @@ class Fun(commands.Cog):
         self.games_lost = 0
 
     @commands.command()
-    async def guess(self, ctx):
+    async def guess(self, ctx: commands.Context):
         """Plays a classic guessing game."""
         await ctx.send('Guess a number between 1 and 10.')
 
@@ -58,7 +58,7 @@ class Fun(commands.Cog):
             return 'Tie.'
         
     @commands.command(name='rock-paper-scissors')
-    async def rock_paper_scissors(self, ctx):
+    async def rock_paper_scissors(self, ctx: commands.Context):
         """Plays a classic game of rock paper scissors"""
         await ctx.send('Rock, Paper, Scissors, shoot!')
 
@@ -85,7 +85,7 @@ class Fun(commands.Cog):
         await ctx.send('{}'.format(result))
     
     @commands.command()
-    async def status(self, ctx):
+    async def status(self, ctx: commands.Context):
         """Tells the player how many games they won/lost"""
         await ctx.send("You have won {} game(s)!".format(self.games_won))
         await ctx.send("You have lost {} game(s)... :(".format(self.games_lost))

@@ -19,7 +19,7 @@ class Math(commands.Cog):
             return "Error: Vaild operator type was not provided. Please provide a vaild operator."
 
     @commands.command()
-    async def solve(self, ctx, operation: str, a: int, b: int):
+    async def solve(self, ctx: commands.Context, operation: str, a: int, b: int):
         """
         Calculates two numbers together.
         Takes in the operation, one int, and another int.

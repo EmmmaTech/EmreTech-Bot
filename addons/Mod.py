@@ -5,7 +5,7 @@ class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def ban_person(self, ctx, member, reason):
+    async def ban_person(self, ctx: commands.Context, member, reason):
         """
         A generic ban command used in ban commands.
 
@@ -59,7 +59,7 @@ class Moderation(commands.Cog):
 
     @commands.command(pass_context=True)
     @commands.has_any_role("Mods")
-    async def kick(self, ctx, member: discord.Member, *, reason="No reason given."):
+    async def kick(self, ctx: commands.Context, member: discord.Member, *, reason="No reason given."):
         """Kick a member."""
         if member == ctx.message.author:
             return await ctx.send("You cannot kick yourself for obvious reasons.")
@@ -79,7 +79,7 @@ class Moderation(commands.Cog):
 
     @commands.command(pass_context=True)
     @commands.has_any_role("Mods")
-    async def ban(self, ctx, member: discord.User, *, reason="No reason given."):
+    async def ban(self, ctx: commands.Context, member: discord.User, *, reason="No reason given."):
         """Bans a member/user."""
         if not member:
             return await ctx.send("User not found. If you are sure this is a valid user, try using `banid` instead.")
@@ -87,7 +87,7 @@ class Moderation(commands.Cog):
         
     @commands.command(pass_context=True)
     @commands.has_any_role("Mods")
-    async def banid(self, ctx, member: int, *, reason="No reason given."):
+    async def banid(self, ctx: commands.Context, member: int, *, reason="No reason given."):
         """Ban a user with their user ID.
 
         To get a user ID, enable developer mode and right click their profile."""

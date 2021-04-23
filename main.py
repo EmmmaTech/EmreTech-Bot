@@ -60,7 +60,7 @@ with open("saves/levels.json", "r") as f:
 
 # Discord Bot events
 @bot.event
-async def on_command_error(ctx, error):
+async def on_command_error(ctx: commands.Context, error):
     if isinstance(error, commands.CommandNotFound):
         pass
     elif isinstance(error, commands.MissingRequiredArgument):
@@ -73,6 +73,9 @@ async def on_command_error(ctx, error):
     else:
         if ctx.command:
             await ctx.send("Some error occured when processing the {0.command.name} command. Please try again.".format(ctx))
+            tb = traceback.format_exception(type(error), error, error.__traceback__)
+            error_trace = "".join(tb)
+            print(error_trace)
 
 @bot.event
 async def on_error(event_method, *args, **kwargs):
@@ -135,7 +138,7 @@ if not failed_cogs:
 
 # Commands for controlling addons
 @bot.command(hidden=True)
-async def load(ctx, *, module):
+async def load(ctx: commands.Context, *, module):
     """Loads an addon. Only for moderators and higher."""
     if ctx.author == ctx.guild.owner or ctx.author == bot.admin_role or ctx.author == bot.moderator_role:
         try:
@@ -148,7 +151,7 @@ async def load(ctx, *, module):
         raise commands.CheckFailure()
 
 @bot.command(hidden=True)
-async def unload(ctx, *, module):
+async def unload(ctx: commands.Context, *, module):
     """Unloads an addon. Only for moderators and higher."""
     if ctx.author == ctx.guild.owner or ctx.author == bot.admin_role or ctx.author == bot.moderator_role:
         try:
@@ -161,7 +164,7 @@ async def unload(ctx, *, module):
         raise commands.CheckFailure()
 
 @bot.command(hidden=True)
-async def restart(ctx):
+async def restart(ctx: commands.Context):
     """Restarts the bot. Only for moderators and higher."""
     if not ctx.author == ctx.guild.owner and not ctx.author == bot.admin_role and not ctx.author == bot.moderator_role:
         raise commands.CheckFailure()

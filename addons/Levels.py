@@ -41,7 +41,7 @@ class Levels(commands.Cog):
 
     @commands.command()
     @commands.has_any_role("Mods")
-    async def addxp(self, ctx, target: discord.Member, amount_xp: int):
+    async def addxp(self, ctx: commands.Context, target: discord.Member, amount_xp: int):
         """Adds xp to a user. Only avaiable to mods and above."""
         #if target == ctx.author:
         #    return await ctx.send("You cannot give xp to yourself!")
@@ -55,9 +55,9 @@ class Levels(commands.Cog):
         cur_xp_limit = 0
 
         try:
-            current_xp = self.bot.levels_dict[str(target.id)]["xp"]
-            current_level = self.bot.levels_dict[str(target.id)]["level"]
-            cur_xp_limit = self.bot.levels_dict[str(target.id)]["xp_limit"]
+            current_xp = self.bot.levels_dict[str(target.id)][0]["xp"]
+            current_level = self.bot.levels_dict[str(target.id)][0]["level"]
+            cur_xp_limit = self.bot.levels_dict[str(target.id)][0]["xp_limit"]
         except KeyError:
             self.bot.levels_dict[str(target.id)] = []
 
@@ -67,7 +67,8 @@ class Levels(commands.Cog):
         if new_level_xp[0] > current_level:
             await ctx.send(f"Good job {target.mention}! You leveled up to {new_level_xp[0]}!")
 
-        self.bot.warns_dict[str(target.id)].update(
+        self.bot.levels_dict[str(target.id)].clear()
+        self.bot.levels_dict[str(target.id)].append(
             {
                 "xp": new_level_xp[1],
                 "xp_limit": new_level_xp[2],
@@ -76,13 +77,13 @@ class Levels(commands.Cog):
         )
 
         with open("saves/levels.json", "w") as f:
-            json.dump(self.bot.warns_dict, f, indent=4)
+            json.dump(self.bot.levels_dict, f, indent=4)
 
         await ctx.send(f"Successfully gave {target} {amount_xp} xp!")
 
     @commands.command()
     @commands.has_any_role("Mods")
-    async def removexp(self, ctx, target: discord.Member, amount_xp: int):
+    async def removexp(self, ctx: commands.Context, target: discord.Member, amount_xp: int):
         """Removes xp from a user. Only avaiable to mods and above."""
         #if target == ctx.author:
         #    return await ctx.send("You cannot remove xp from yourself!")
@@ -96,9 +97,9 @@ class Levels(commands.Cog):
         cur_xp_limit = 0
 
         try:
-            current_xp = self.bot.levels_dict[str(target.id)]["xp"]
-            current_level = self.bot.levels_dict[str(target.id)]["level"]
-            cur_xp_limit = self.bot.levels_dict[str(target.id)]["xp_limit"]
+            current_xp = self.bot.levels_dict[str(target.id)][0]["xp"]
+            current_level = self.bot.levels_dict[str(target.id)][0]["level"]
+            cur_xp_limit = self.bot.levels_dict[str(target.id)][0]["xp_limit"]
         except KeyError:
             self.bot.levels_dict[str(target.id)] = []
 
@@ -108,7 +109,8 @@ class Levels(commands.Cog):
         current_xp -= amount_xp
         new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit)
 
-        self.bot.warns_dict[str(target.id)].update(
+        self.bot.levels_dict[str(target.id)].clear()
+        self.bot.levels_dict[str(target.id)].append(
             {
                 "xp": new_level_xp[1],
                 "xp_limit": new_level_xp[2],
@@ -117,20 +119,12 @@ class Levels(commands.Cog):
         )
 
         with open("saves/levels.json", "w") as f:
-            json.dump(self.bot.warns_dict, f, indent=4)
+            json.dump(self.bot.levels_dict, f, indent=4)
 
         await ctx.send(f"Successfully removed {target} {amount_xp} xp!")
 
     @commands.command()
-    async def rank(self, ctx, target: discord.Member = None):
-        try:
-            xp = self.bot.levels_dict[str(target.id)]["xp"]
-            level = self.bot.levels_dict[str(target.id)]["level"]
-            xp_limit = self.bot.levels_dict[str(target.id)]["xp_limit"]
-        except KeyError:
-            self.bot.levels_dict[str(target.id)] = []
-            return await ctx.send("You cannot get a rank on someone who doesn't have any xp/levels stored.")
-
+    async def rank(self, ctx: commands.Context, target: discord.Member = None):
         embed = discord.Embed()
 
         if not target:
@@ -139,6 +133,14 @@ class Levels(commands.Cog):
         else:
             id = target.id
             embed.title = f"Current rank for {target}:"
+
+        try:
+            xp = self.bot.levels_dict[str(id)][0]["xp"]
+            level = self.bot.levels_dict[str(id)][0]["level"]
+            xp_limit = self.bot.levels_dict[str(id)][0]["xp_limit"]
+        except KeyError:
+            self.bot.levels_dict[str(target.id)] = []
+            return await ctx.send("You cannot get a rank on someone who doesn't have any xp/levels stored.")
 
         embed.description = f"Current XP: {xp}/{xp_limit}"
         embed.description += f"\nCurrent Level: {level}"
