@@ -31,7 +31,7 @@ class Moderation(commands.Cog):
 
         try:
             if len(reason) > 512:
-                await ctx.guild.ban(member, delete_message_days=0, reason="The reason length is too long. Please check audit logs/public bot logs.")
+                await ctx.guild.ban(member, delete_message_days=0, reason="The reason length is too long. Please check public bot logs.")
             else:
                 await ctx.guild.ban(member, delete_message_days=0, reason=reason)
         except discord.Forbidden:
@@ -72,7 +72,7 @@ class Moderation(commands.Cog):
             except discord.Forbidden:
                 pass
             if len(reason) > 512:
-                await member.kick(reason="The reason length is too long. Please check audit logs/public bot logs.")
+                await member.kick(reason="The reason length is too long. Please check public bot logs.")
             else:
                 await member.kick(reason=reason)
             await ctx.send(f"Successfully kicked user {member}!")

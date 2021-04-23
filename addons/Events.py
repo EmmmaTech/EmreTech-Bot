@@ -29,6 +29,16 @@ class Events(commands.Cog):
         if self.bot.logs_channel is not None:
             await self.bot.logs_channel.send(embed=embed)
 
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        # Auto ban if someone pings 20+ times in one message
+        if len(message.mentions) > 20:
+            await message.delete()
+            await message.author.ban()
+            return await message.channel.send(f"{message.author} was banned for mass pinging (auto bans of mass pinging is 20+).")
+
+        # TODO: When a user sends a message, they will gain xp. If they post another message within 1.5 minutes of the last message, they won't get any xp.
+
 
 def setup(bot):
     bot.add_cog(Events(bot))
