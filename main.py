@@ -20,11 +20,16 @@ except ModuleNotFoundError:
 
 # Discord Bot setup
 prefix = config.prefix
-status = discord.Activity(name=config.status, type=discord.ActivityType.watching)
+if not config.beta:
+    status = discord.Activity(name=config.status, type=discord.ActivityType.watching)
+else:
+    status = discord.Activity(name=config.status + " Beta build.", type=discord.ActivityType.watching)
 token = config.token
-
 intents = discord.Intents.all()
+helpCmd = commands.DefaultHelpCommand(width=200)
+
 bot = commands.Bot(command_prefix=prefix, description=description, activity=status, intents=intents)
+bot.help_command = helpCmd
 
 bot.ready = False
 bot.is_beta = config.beta
@@ -62,20 +67,29 @@ with open("saves/levels.json", "r") as f:
 @bot.event
 async def on_command_error(ctx: commands.Context, error):
     if isinstance(error, commands.CommandNotFound):
-        pass
+        await ctx.send(f"Command not found. To get usuable commands, use `{prefix}help` to see them.")
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("You are missing required arguments for this command. Review the help page below:")
         await ctx.send_help(ctx.command)
     elif isinstance(error, commands.BadArgument):
-        await ctx.send("Bad argument was provided, try running the command again.")
+        await ctx.send("Bad arguments were provided, try running the command again with correct arguments.")
     elif isinstance(error, commands.CheckFailure):
         await ctx.send("You cannot use this command due to not having the right permission.")
     else:
         if ctx.command:
-            await ctx.send("Some error occured when processing the {0.command.name} command. Please try again.".format(ctx))
+            await ctx.send(f"An error occured when processing the {ctx.command.name} command. If you are a Moderator, check the bot's logs.")
             tb = traceback.format_exception(type(error), error, error.__traceback__)
             error_trace = "".join(tb)
             print(error_trace)
+            try:
+                embed = discord.Embed(title=f"Error while processing {ctx.command.name} command!")
+                if len(error_trace) > 512:
+                    embed.description = "Error trace is too long to put here. If you have access to the Terminal running me (the bot), check there."
+                else:
+                    embed.description = f"```\n{error_trace}\n```"
+                bot.logs_channel.send(embed=embed)
+            except:
+                pass
 
 @bot.event
 async def on_error(event_method, *args, **kwargs):
@@ -136,7 +150,7 @@ for exten in cogs:
 if not failed_cogs:
     print("All addons were loaded successfully!")
 
-# Commands for controlling addons
+# Commands for controlling the bot itself
 @bot.command(hidden=True)
 async def load(ctx: commands.Context, *, module):
     """Loads an addon. Only for moderators and higher."""
@@ -165,8 +179,8 @@ async def unload(ctx: commands.Context, *, module):
 
 @bot.command(hidden=True)
 async def restart(ctx: commands.Context):
-    """Restarts the bot. Only for moderators and higher."""
-    if not ctx.author == ctx.guild.owner and not ctx.author == bot.admin_role and not ctx.author == bot.moderator_role:
+    """Restarts the bot. Only for admins and higher."""
+    if not ctx.author == ctx.guild.owner and not ctx.author == bot.admin_role:
         raise commands.CheckFailure()
     await ctx.send("Restarting the bot...")
     with open("restart.txt", "w") as fil:
@@ -178,4 +192,6 @@ try:
     bot.run(token)
 except aiohttp.ClientConnectorCertificateError:
     print("Unable to connect to discord.com due to a SSL Certificate error.")
+except SystemExit: # For some reason, Python throws an exception if a SystemExit happens.
+    pass # Since it's intentional (i.e. someone runs the restart command), we don't really care.
 # Add any suggestions for more exceptions to put here

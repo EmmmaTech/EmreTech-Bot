@@ -1,6 +1,7 @@
 import discord
 import json
 from discord.ext import commands
+from addons.Helper import restricted_to_bot_channel
 
 class Levels(commands.Cog):
     """
@@ -24,18 +25,36 @@ class Levels(commands.Cog):
             level = current_level + 1
             return [level, xp, xp_limit]
 
-        if level <= 10 and amount_xp >= 500:
-            return new_xp(amount_xp, level, 500)
-        elif level <= 20 and amount_xp >= 1000:
-            return new_xp(amount_xp, level, 1000)
-        elif level <= 30 and amount_xp >= 1500:
-            return new_xp(amount_xp, level, 1500)
-        elif level <= 40 and amount_xp >= 2000:
-            return new_xp(amount_xp, level, 2000)
-        elif level <= 50 and amount_xp >= 2500:
-            return new_xp(amount_xp, level, 2500)
-        elif level >= 51 and amount_xp >= 2500:
-            return new_xp(amount_xp, level, 2500)
+        if level <= 10:
+            if amount_xp >= 500:
+                return new_xp(amount_xp, level, 500)
+            return [level, amount_xp, 500]
+        
+        elif level <= 20:
+            if amount_xp >= 1000:
+                return new_xp(amount_xp, level, 1000)
+            return [level, amount_xp, 1000]
+        
+        elif level <= 30:
+            if amount_xp >= 1500:
+                return new_xp(amount_xp, level, 1500)
+            return [level, amount_xp, 1500]
+        
+        elif level <= 40:
+            if amount_xp >= 2000:
+                return new_xp(amount_xp, level, 2000)
+            return [level, amount_xp, 2000]
+        
+        elif level <= 50:
+            if amount_xp >= 2500:
+                return new_xp(amount_xp, level, 2500)
+            return [level, amount_xp, 2500]
+        
+        elif level >= 51:
+            if amount_xp >= 2500:
+                return new_xp(amount_xp, level, 2500)
+            return [level, amount_xp, 2500]
+        
         else:
             return [level, amount_xp, cur_xp_limit]
 
@@ -55,20 +74,19 @@ class Levels(commands.Cog):
         cur_xp_limit = 0
 
         try:
-            current_xp = self.bot.levels_dict[str(target.id)][0]["xp"]
-            current_level = self.bot.levels_dict[str(target.id)][0]["level"]
-            cur_xp_limit = self.bot.levels_dict[str(target.id)][0]["xp_limit"]
+            current_xp = self.bot.levels_dict[str(target.id)]["xp"]
+            current_level = self.bot.levels_dict[str(target.id)]["level"]
+            cur_xp_limit = self.bot.levels_dict[str(target.id)]["xp_limit"]
         except KeyError:
-            self.bot.levels_dict[str(target.id)] = []
+            self.bot.levels_dict[str(target.id)] = {}
 
         current_xp += amount_xp
         new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit)
 
         if new_level_xp[0] > current_level:
-            await ctx.send(f"Good job {target.mention}! You leveled up to {new_level_xp[0]}!")
+            await ctx.send(f"Good job {target.mention}! You leveled up to level {new_level_xp[0]}!")
 
-        self.bot.levels_dict[str(target.id)].clear()
-        self.bot.levels_dict[str(target.id)].append(
+        self.bot.levels_dict[str(target.id)].update(
             {
                 "xp": new_level_xp[1],
                 "xp_limit": new_level_xp[2],
@@ -97,11 +115,11 @@ class Levels(commands.Cog):
         cur_xp_limit = 0
 
         try:
-            current_xp = self.bot.levels_dict[str(target.id)][0]["xp"]
-            current_level = self.bot.levels_dict[str(target.id)][0]["level"]
-            cur_xp_limit = self.bot.levels_dict[str(target.id)][0]["xp_limit"]
+            current_xp = self.bot.levels_dict[str(target.id)]["xp"]
+            current_level = self.bot.levels_dict[str(target.id)]["level"]
+            cur_xp_limit = self.bot.levels_dict[str(target.id)]["xp_limit"]
         except KeyError:
-            self.bot.levels_dict[str(target.id)] = []
+            self.bot.levels_dict[str(target.id)] = {}
 
         if current_xp <= 0 and current_level <= 0:
             return await ctx.send("You cannot remove xp from someone who has no xp.")
@@ -109,8 +127,7 @@ class Levels(commands.Cog):
         current_xp -= amount_xp
         new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit)
 
-        self.bot.levels_dict[str(target.id)].clear()
-        self.bot.levels_dict[str(target.id)].append(
+        self.bot.levels_dict[str(target.id)].update(
             {
                 "xp": new_level_xp[1],
                 "xp_limit": new_level_xp[2],
@@ -124,7 +141,9 @@ class Levels(commands.Cog):
         await ctx.send(f"Successfully removed {target} {amount_xp} xp!")
 
     @commands.command()
+    @restricted_to_bot_channel
     async def rank(self, ctx: commands.Context, target: discord.Member = None):
+        """Shows the current xp and level of a specified member or themselves."""
         embed = discord.Embed()
 
         if not target:
@@ -135,11 +154,10 @@ class Levels(commands.Cog):
             embed.title = f"Current rank for {target}:"
 
         try:
-            xp = self.bot.levels_dict[str(id)][0]["xp"]
-            level = self.bot.levels_dict[str(id)][0]["level"]
-            xp_limit = self.bot.levels_dict[str(id)][0]["xp_limit"]
+            xp = self.bot.levels_dict[str(id)]["xp"]
+            level = self.bot.levels_dict[str(id)]["level"]
+            xp_limit = self.bot.levels_dict[str(id)]["xp_limit"]
         except KeyError:
-            self.bot.levels_dict[str(target.id)] = []
             return await ctx.send("You cannot get a rank on someone who doesn't have any xp/levels stored.")
 
         embed.description = f"Current XP: {xp}/{xp_limit}"
