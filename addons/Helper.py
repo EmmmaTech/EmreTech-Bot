@@ -1,5 +1,6 @@
 import discord
 import functools
+from datetime import datetime
 from discord.ext import commands
 
 def restricted_to_bot_channel(func):
@@ -16,3 +17,14 @@ def restricted_to_bot_channel(func):
         await func(*args, **kwargs)
     return wrapper
 
+async def check_mute_expiry(mutes_dict: dict, member: discord.User):
+    if not str(member.id) in mutes_dict.keys():
+        return None
+    end_time = mutes_dict[str(member.id)]
+    if end_time == "Indefinite":
+        return True
+    elif end_time == "":
+        return None
+    end_time = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    diff = end_time - datetime.utcnow()
+    return diff.total_seconds() < 0

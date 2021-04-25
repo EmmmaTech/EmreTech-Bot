@@ -9,28 +9,46 @@ import os
 import sys
 import aiohttp
 import json
+import argparse
 from discord.ext import commands
 
 try:
     import config
 except ModuleNotFoundError:
-    if not "USE_ENVIRO" in os.environ:
-        print("Config file is not available. This bot requires a config file to configure the bot properly.\n", 
-        "Cannot run bot in this state. Quitting...")
+    if "-args" not in sys.argv:
+        print("Config file is not available, and '-env' not passed. Bot cannot run. Quitting...\n")
         exit(1)
     else:
         pass
 
+# Parse command arguments (if any)
+def parse_cmd_arguments():
+    parser = argparse.ArgumentParser(description="EmreTech-Bot")
+    parser.add_argument("-env", "--env-args",
+                        action="store_true",
+                        help="Uses env (enviroment) variables instead of a config file")
+    return parser
+
+argpar, unknown = parse_cmd_arguments().parse_known_args()
+env_run = argpar.env_args
+
+if env_run:
+    using_env_args = True
+    using_config_file = False
+else:
+    using_env_args = False
+    using_config_file = True
+
 # Discord Bot setup
 status = discord.Activity(type=discord.ActivityType.watching)
-if not "USE_ENVIRO" in os.environ:
+if using_config_file:
     prefix = config.prefix
     if not config.beta:
         status.name = config.status
     else:
         status.name = config.status + " Beta build."
     token = config.token
-else:
+elif using_env_args:
     prefix = os.getenv("PREFIX")
     if not bool(os.getenv("BETA")):
         status.name = os.getenv("STATUS")
@@ -45,9 +63,9 @@ bot = commands.Bot(command_prefix=prefix, description=description, activity=stat
 bot.help_command = helpCmd
 
 bot.ready = False
-if not "USE_ENVIRO" in os.environ:
+if using_config_file:
     bot.is_beta = config.beta
-else:
+elif using_env_args:
     bot.is_beta = bool(os.getenv("BETA"))
 emretechofficialserver_id = 816810434811527198
 

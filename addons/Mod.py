@@ -1,9 +1,36 @@
 import discord
+import os
+import json
+import asyncio
+from datetime import datetime, timedelta
 from discord.ext import commands
+from addons.Helper import check_mute_expiry
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.mute_loop = bot.loop.create_task(self.check_mute_loop())
+
+    def cog_unload(self):
+        self.mute_loop.cancel()
+
+    async def check_mute_loop(self):
+        guild = self.bot.get_guild(816810434811527198) # TODO: Allow more guilds (server) support
+        while not self.bot.is_closed():
+            for m in self.bot.mutes_dict.keys():
+                member = guild.get_member(int(m))
+                if member is None:
+                    continue
+
+                is_expired = await check_mute_expiry(self.bot.mutes_dict, member)
+                if not is_expired or self.bot.mutes_dict[str(member.id)] == "":
+                    continue
+                await member.remove_roles(self.bot.mute_role)
+                self.bot.mutes_dict[str(member.id)] = ""
+                with open("saves/mutes.json", "w") as f:
+                    json.dump(self.bot.mutes_dict, f, indent=4)
+                await member.send(f"Your mute on {self.bot.guild} expired!")
+            await asyncio.sleep(1)
 
     async def ban_person(self, ctx: commands.Context, member, reason):
         """
@@ -24,7 +51,7 @@ class Moderation(commands.Cog):
             pass
 
         try:
-            await member.send(f"You were banned from {self.bot.guild.name} for \n\n{reason}"
+            await member.send(f"You were banned from {self.bot.guild.name} for \n\n`{reason}`"
             f"\n\nIf you believe this is a mistake, please contact the Admins/Moderators of {ctx.guild.name}.")
         except discord.Forbidden:
             pass
@@ -67,7 +94,7 @@ class Moderation(commands.Cog):
             return await ctx.send("You cannot kick a protected user for obvious reasons.")
         else:
             try:
-                await member.send(f"You were kicked from {self.bot.guild.name} for \n\n{reason}"
+                await member.send(f"You were kicked from {self.bot.guild.name} for: \n\n`{reason}`"
                 f"\n\nIf you believe this is a mistake, you can rejoin the Discord Server.")
             except discord.Forbidden:
                 pass
@@ -96,7 +123,92 @@ class Moderation(commands.Cog):
             return await ctx.send("This is not a valid discord user.")
         await self.ban_person(ctx, member, reason)
 
-    # TODO: Add muting, unmuting, and timemuting a member.
+    @commands.command()
+    @commands.has_any_role("Mods")
+    async def mute(self, ctx: commands.Context, member: discord.Member, *, reason="No reason given."):
+        """Mutes a user."""
+        if member == ctx.message.author:
+            return await ctx.send("You cannot mute yourself for obvious reasons.")
+        elif any(i for i in self.bot.protected_roles if i in member.roles):
+            return await ctx.send("You cannot mute a protected user for obvious reasons.")
+        elif self.bot.mute_role in member.roles:
+            return await ctx.send("That member is muted already.")
+
+        await member.add_roles(self.bot.mute_role)
+        self.bot.mutes_dict[str(member.id)] = "Indefinite"
+        with open("saves/mutes.json", "w") as f:
+            json.dump(self.bot.mutes_dict, f, indent=4)
+        
+        try:
+            await member.send(f"You were muted on {self.bot.guild.name} for:\n\n`{reason}`")
+        except discord.Forbidden:
+            pass
+        await ctx.send(f"Successfully muted {member}!")
+
+    @commands.command()
+    @commands.has_any_role("Mods")
+    async def unmute(self, ctx: commands.Context, member: discord.Member, *, reason="No reason given."):
+        """Unmutes a user."""
+        if member == ctx.message.author or any(r for r in self.bot.protected_roles if r in member.roles):
+            return await ctx.send(f"I wonder how {member.mention} got muted...")
+        elif self.bot.mute_role not in member.roles:
+            return await ctx.send("That member isn't muted.")
+
+        await member.remove_roles(self.bot.mute_role)
+        self.bot.mutes_dict[str(member.id)] = ""
+        with open("saves/mutes.json", "w") as f:
+            json.dump(self.bot.mutes_dict, f, indent=4)
+
+        try:
+            await member.send(f"You were unmuted on {self.bot.guild.name}.")
+        except discord.Forbidden:
+            pass
+        await ctx.send(f"Successfully unmuted {member}!")
+
+    @commands.command(name="tmute")
+    @commands.has_any_role("Mods")
+    async def timemute(self, ctx: commands.Context, member: discord.Member, duration, reason="No reason given."):
+        """Timemutes a user with units s, m, h, and d."""
+        if member == ctx.message.author:
+            return await ctx.send("You cannot mute yourself for obvious reasons.")
+        elif any(i for i in self.bot.protected_roles if i in member.roles):
+            return await ctx.send("You cannot mute a protected user for obvious reasons.")
+        elif self.bot.mute_role in member.roles:
+            return await ctx.send("That member is muted already.")
+
+        cur_time = datetime.utcnow()
+
+        try:
+            if int(duration[:-1]) == 0:
+                return await ctx.send("You cannot mute for a time length of 0.")
+            elif duration.lower().endswith("s"):
+                diff = timedelta(seconds=int(duration[:-1]))
+            elif duration.lower().endswith("m"):
+                diff = timedelta(minutes=int(duration[:-1]))
+            elif duration.lower().endswith("h"):
+                diff = timedelta(hours=int(duration[:-1]))
+            elif duration.lower().endswith("d"):
+                diff = timedelta(days=int(duration[:-1]))
+            else:
+                await ctx.send("That's a invalid duration value.")
+                return await ctx.send_help(ctx.command)
+        except ValueError:
+            await ctx.send("Wow, great job! A ValueError was caused! Try again please.")
+            return await ctx.send_help(ctx.command)
+
+        end = cur_time + diff
+        end_str = end.strftime("%Y-%m-%d %H:%M:%S")
+        await member.add_roles(self.bot.mute_role)
+        self.bot.mutes_dict[str(member.id)] = end_str
+        with open("saves/mutes.json", "w") as f:
+            json.dump(self.bot.mutes_dict, f, indent=4)
+
+        try:
+            await member.send(f"You were muted on {self.bot.guild.name} for:\n\n`{reason}`\n\nYou will be unmuted on {end_str}.")
+        except discord.Forbidden:
+            pass
+        await ctx.send(f"Successfully muted {member} until `{end_str}` in UTC time!")
+
 
 def setup(bot):
     bot.add_cog(Moderation(bot))
