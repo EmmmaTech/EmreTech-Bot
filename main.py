@@ -14,9 +14,12 @@ from discord.ext import commands
 try:
     import config
 except ModuleNotFoundError:
-    print("Config file is not available. This bot requires a config file to configure the bot properly.\n", 
-    "Cannot run bot in this state. Quitting...")
-    exit(1)
+    if not "USE_ENVIRO" in os.environ:
+        print("Config file is not available. This bot requires a config file to configure the bot properly.\n", 
+        "Cannot run bot in this state. Quitting...")
+        exit(1)
+    else:
+        pass
 
 # Discord Bot setup
 status = discord.Activity(type=discord.ActivityType.watching)
