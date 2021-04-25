@@ -14,7 +14,7 @@ class Levels(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def calculate_xp(self, amount_xp: int, level: int, cur_xp_limit: int):
+    def calculate_xp(self, amount_xp: int, level: int, cur_xp_limit: int, extra_xp: int, addition: bool = True):
         """
         Calculates the current amount of xp and level.
         Returns a list with the new level, xp, and xp limit.
@@ -25,22 +25,32 @@ class Levels(commands.Cog):
         if cur_xp_limit == 0:
             cur_xp_limit = cal_xp_limit(level)
         
-        def new_xp(current_xp: int, current_level: int):
-            xp_limit = cal_xp_limit(current_level)
+        if addition:
+            amount_xp += extra_xp
+        else:
+            amount_xp -= extra_xp
 
-            if (current_xp - xp_limit) >= 0:
-                xp = current_xp - xp_limit
+        def new_xp(current_xp: int, current_level: int, cur_xp_lim: int):
+            xp_limit = cal_xp_limit(current_level)
+            tmp_xp = current_xp - xp_limit
+
+            if tmp_xp >= 0:
+                print("Positive xp!")
+                xp = tmp_xp
                 level = current_level + 1
-            else:
-                xp = abs(current_xp - xp_limit) - xp_limit
+            elif tmp_xp < 0:
+                print("Negative xp!")
                 level = current_level - 1
                 xp_limit = cal_xp_limit(level)
+                xp = xp_limit - abs(current_xp)
 
             return [level, xp, xp_limit]
 
-        if amount_xp >= cur_xp_limit or amount_xp <= -cur_xp_limit:
-            return new_xp(amount_xp, level)
+        if amount_xp >= cur_xp_limit or amount_xp < 0:
+            print("New xp!")
+            return new_xp(amount_xp, level, cur_xp_limit)
         else:
+            print("Old xp!")
             return [level, amount_xp, cur_xp_limit]
 
     @commands.command()
@@ -65,8 +75,7 @@ class Levels(commands.Cog):
         except KeyError:
             self.bot.levels_dict[str(target.id)] = {}
 
-        current_xp += amount_xp
-        new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit)
+        new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit, amount_xp)
 
         if new_level_xp[0] > current_level:
             await ctx.send(f"Good job {target.mention}! You leveled up to level {new_level_xp[0]}!")
@@ -107,11 +116,10 @@ class Levels(commands.Cog):
         except KeyError:
             self.bot.levels_dict[str(target.id)] = {}
 
-        if current_xp <= 0 and current_level <= 0:
-            return await ctx.send("You cannot remove xp from someone who has no xp.")
+        if current_level <= 0:
+            return await ctx.send("You cannot remove xp from someone who has no levels.")
 
-        current_xp -= amount_xp
-        new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit)
+        new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit, amount_xp, False)
 
         self.bot.levels_dict[str(target.id)].update(
             {
