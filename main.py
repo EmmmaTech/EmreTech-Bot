@@ -45,7 +45,10 @@ bot = commands.Bot(command_prefix=prefix, description=description, activity=stat
 bot.help_command = helpCmd
 
 bot.ready = False
-bot.is_beta = config.beta
+if not "USE_ENVIRO" in os.environ:
+    bot.is_beta = config.beta
+else:
+    bot.is_beta = bool(os.getenv("BETA"))
 emretechofficialserver_id = 816810434811527198
 
 # Setup files
