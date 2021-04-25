@@ -7,14 +7,14 @@ class Levels(commands.Cog):
     """
     Levels are based on the idea from the Mee6 bot. 
     Every time a user says a message, they earn xp. However, if they spam, they will not get extra xp.
-    There is a limit of xp to earn to get to the next level. This limit increases until level 51, where it stays at 2500.
+    There is a limit of xp to earn to get to the next level. This expression is used to calculate the limit: 500 * ((level + 1) * 2).
     Levels are stored in a json file in local storage, where each member's xp are stored by the member's id.
     """
 
     def __init__(self, bot):
         self.bot = bot
 
-    def calculate_xp(self, amount_xp: int, level: int, cur_xp_limit: int, extra_xp: int, addition: bool = True):
+    def calculate_xp(self, amount_xp: int, level: int, cur_xp_limit: int):
         """
         Calculates the current amount of xp and level.
         Returns a list with the new level, xp, and xp limit.
@@ -24,11 +24,6 @@ class Levels(commands.Cog):
 
         if cur_xp_limit == 0:
             cur_xp_limit = cal_xp_limit(level)
-        
-        if addition:
-            amount_xp += extra_xp
-        else:
-            amount_xp -= extra_xp
 
         def new_xp(current_xp: int, current_level: int, cur_xp_lim: int):
             xp_limit = cal_xp_limit(current_level)
@@ -75,7 +70,8 @@ class Levels(commands.Cog):
         except KeyError:
             self.bot.levels_dict[str(target.id)] = {}
 
-        new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit, amount_xp)
+        current_xp += amount_xp
+        new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit)
 
         if new_level_xp[0] > current_level:
             await ctx.send(f"Good job {target.mention}! You leveled up to level {new_level_xp[0]}!")
@@ -119,7 +115,8 @@ class Levels(commands.Cog):
         if current_level <= 0:
             return await ctx.send("You cannot remove xp from someone who has no levels.")
 
-        new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit, amount_xp, False)
+        current_xp -= amount_xp
+        new_level_xp = self.calculate_xp(current_xp, current_level, cur_xp_limit)
 
         self.bot.levels_dict[str(target.id)].update(
             {
