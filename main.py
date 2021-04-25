@@ -1,6 +1,6 @@
 description = """EmreTech's Helper Bot! Helps around in EmreTech's official server, and many more in the future!"""
 
-# Rewrite based by FlagBot Discord Bot, made by GriffinG1
+# Rewrite based on the FlagBot Discord Bot, made by GriffinG1
 
 # Module importion
 import discord
@@ -19,12 +19,22 @@ except ModuleNotFoundError:
     exit(1)
 
 # Discord Bot setup
-prefix = config.prefix
-if not config.beta:
-    status = discord.Activity(name=config.status, type=discord.ActivityType.watching)
+status = discord.Activity(type=discord.ActivityType.watching)
+if not "USE_ENVIRO" in os.environ:
+    prefix = config.prefix
+    if not config.beta:
+        status.name = config.status
+    else:
+        status.name = config.status + " Beta build."
+    token = config.token
 else:
-    status = discord.Activity(name=config.status + " Beta build.", type=discord.ActivityType.watching)
-token = config.token
+    prefix = os.getenv("PREFIX")
+    if not bool(os.getenv("BETA")):
+        status.name = os.getenv("STATUS")
+    else:
+        status.name = os.getenv("STATUS") + " Beta build."
+    token = os.getenv("TOKEN")
+
 intents = discord.Intents.all()
 helpCmd = commands.DefaultHelpCommand(width=200)
 

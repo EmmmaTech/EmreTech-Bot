@@ -20,47 +20,32 @@ class Levels(commands.Cog):
         Returns a list with the new level, xp, and xp limit.
         """
 
-        def new_xp(current_xp: int, current_level: int, xp_limit: int):
-            xp = xp_limit - current_xp
-            level = current_level + 1
+        cal_xp_limit = lambda lev : 500 * ((lev + 1) * 2)
+
+        if cur_xp_limit == 0:
+            cur_xp_limit = cal_xp_limit(level)
+        
+        def new_xp(current_xp: int, current_level: int):
+            xp_limit = cal_xp_limit(current_level)
+
+            if (current_xp - xp_limit) >= 0:
+                xp = current_xp - xp_limit
+                level = current_level + 1
+            else:
+                xp = abs(current_xp - xp_limit) - xp_limit
+                level = current_level - 1
+                xp_limit = cal_xp_limit(level)
+
             return [level, xp, xp_limit]
 
-        if level <= 10:
-            if amount_xp >= 500:
-                return new_xp(amount_xp, level, 500)
-            return [level, amount_xp, 500]
-        
-        elif level <= 20:
-            if amount_xp >= 1000:
-                return new_xp(amount_xp, level, 1000)
-            return [level, amount_xp, 1000]
-        
-        elif level <= 30:
-            if amount_xp >= 1500:
-                return new_xp(amount_xp, level, 1500)
-            return [level, amount_xp, 1500]
-        
-        elif level <= 40:
-            if amount_xp >= 2000:
-                return new_xp(amount_xp, level, 2000)
-            return [level, amount_xp, 2000]
-        
-        elif level <= 50:
-            if amount_xp >= 2500:
-                return new_xp(amount_xp, level, 2500)
-            return [level, amount_xp, 2500]
-        
-        elif level >= 51:
-            if amount_xp >= 2500:
-                return new_xp(amount_xp, level, 2500)
-            return [level, amount_xp, 2500]
-        
+        if amount_xp >= cur_xp_limit or amount_xp <= -cur_xp_limit:
+            return new_xp(amount_xp, level)
         else:
             return [level, amount_xp, cur_xp_limit]
 
     @commands.command()
     @commands.has_any_role("Mods")
-    async def addxp(self, ctx: commands.Context, target: discord.Member, amount_xp: int):
+    async def addxp(self, ctx: commands.Context, target: discord.Member, amount_xp: int, silent: bool = False):
         """Adds xp to a user. Only avaiable to mods and above."""
         #if target == ctx.author:
         #    return await ctx.send("You cannot give xp to yourself!")
@@ -97,11 +82,12 @@ class Levels(commands.Cog):
         with open("saves/levels.json", "w") as f:
             json.dump(self.bot.levels_dict, f, indent=4)
 
-        await ctx.send(f"Successfully gave {target} {amount_xp} xp!")
+        if not silent:
+            await ctx.send(f"Successfully gave {target} {amount_xp} xp!")
 
     @commands.command()
     @commands.has_any_role("Mods")
-    async def removexp(self, ctx: commands.Context, target: discord.Member, amount_xp: int):
+    async def removexp(self, ctx: commands.Context, target: discord.Member, amount_xp: int, silent: bool = False):
         """Removes xp from a user. Only avaiable to mods and above."""
         #if target == ctx.author:
         #    return await ctx.send("You cannot remove xp from yourself!")
@@ -138,7 +124,8 @@ class Levels(commands.Cog):
         with open("saves/levels.json", "w") as f:
             json.dump(self.bot.levels_dict, f, indent=4)
 
-        await ctx.send(f"Successfully removed {target} {amount_xp} xp!")
+        if not silent:
+            await ctx.send(f"Successfully removed {target} {amount_xp} xp!")
 
     @commands.command()
     @restricted_to_bot_channel
