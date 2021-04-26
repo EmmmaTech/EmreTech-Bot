@@ -1,5 +1,6 @@
 import discord
 import os
+import json
 from discord.ext import commands
 
 class Utility(commands.Cog):
@@ -35,6 +36,12 @@ class Utility(commands.Cog):
             with open("saves/rules.txt", "r") as fil:
                 rules = fil.read()
             await ctx.send(f"Here are the rules: \n```\n{rules}\n```")
+
+    @commands.command()
+    async def snipe(self, ctx: commands.Context):
+        """Finds the latest deleted message. 
+        Inspired by Mewdeko's snipe function."""
+        await ctx.send("Unimplemented.")
 
 def setup(bot):
     bot.add_cog(Utility(bot))

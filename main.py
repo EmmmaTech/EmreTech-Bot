@@ -67,6 +67,8 @@ if using_config_file:
     bot.is_beta = config.beta
 elif using_env_args:
     bot.is_beta = bool(os.getenv("BETA"))
+
+bot.deleted_dict = {} # For deleted messages
 emretechofficialserver_id = 816810434811527198
 
 # Setup files
@@ -76,26 +78,17 @@ os.chdir(dir_path) # To ensure the current directory is at the project root
 if not os.path.exists('saves'):
     os.mkdir('saves')
 
-# Warnings
-if not os.path.exists("saves/warns.json"):
-    with open("saves/warns.json", "w") as f:
-        json.dump({}, f, indent=4)
-with open("saves/warns.json", "r") as f:
-    bot.warns_dict = json.load(f)
+def load_from_file(fpath: str, data: dict = {}):
+    if not os.path.exists(fpath):
+        with open(fpath, "w") as f:
+            json.dump(data, f, indent=4)
+        
+    with open(fpath, "r") as f:
+        return json.load(f)
 
-# Mutes
-if not os.path.exists("saves/mutes.json"):
-    with open("saves/mutes.json", "w") as f:
-        json.dump({}, f, indent=4)
-with open("saves/mutes.json", "r") as f:
-    bot.mutes_dict = json.load(f)
-
-# Levels
-if not os.path.exists("saves/levels.json"):
-    with open("saves/levels.json", "w") as f:
-        json.dump({}, f, indent=4)
-with open("saves/levels.json", "r") as f:
-    bot.levels_dict = json.load(f)
+bot.warns_dict = load_from_file("saves/warns.json")
+bot.mutes_dict = load_from_file("saves/mutes.json")
+bot.levels_dict = load_from_file("saves/levels.json")
 
 # Discord Bot events
 @bot.event

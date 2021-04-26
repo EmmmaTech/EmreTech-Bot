@@ -1,5 +1,7 @@
 import discord
+import json
 from addons.Helper import check_mute_expiry
+from datetime import datetime
 from discord.ext import commands
 
 class Events(commands.Cog):
@@ -7,7 +9,7 @@ class Events(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         try:
             mute_exp = self.bot.mutes_dict[str(member.id)]
         except KeyError:
@@ -18,7 +20,7 @@ class Events(commands.Cog):
         embed.description += f"\n\n Welcome to {member.guild.name}! Please read the rules in order to continue into this server."
 
         if mute_exp != "" and not await check_mute_expiry(self.bot.mutes_dict, member):
-            embed.add_field(name="Muted until", value=mute_exp + " UTC")
+            embed.add_field(name="Muted until ", value=mute_exp + " UTC")
             embed.description += "\nIf you tried to get unmuted by rejoining, it won't work. Nice try."
             await member.add_roles(self.bot.mute_role)
 
@@ -29,7 +31,7 @@ class Events(commands.Cog):
             await self.bot.logs_channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_member_remove(self, member):
+    async def on_member_remove(self, member: discord.Member):
         try:
             mute_exp = self.bot.mutes_dict[str(member.id)]
         except KeyError:
@@ -45,7 +47,7 @@ class Events(commands.Cog):
             await self.bot.logs_channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         # Auto ban if someone pings 20+ times in one message
         if len(message.mentions) > 20:
             await message.delete()
@@ -54,6 +56,29 @@ class Events(commands.Cog):
 
         # TODO: When a user sends a message, they will gain xp. If they post another message within 1.5 minutes of the last message, they won't get any xp.
 
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: discord.Message):
+        date_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+        msg_id = message.id
+        user_id = message.author.id
+        channel_id = message.channel.id
+        content = message.content
+
+        self.bot.deleted_dict[str(msg_id)] = {
+            "user": user_id,
+            "channel": channel_id,
+            "content": content,
+            "date": date_time
+        }
+
+        embed = discord.Embed(title="Message deleted")
+        embed.description = f"Message contents: \n```\n{content}\n```"
+        embed.add_field(name="Date deleted", value=date_time + " UTC")
+        embed.add_field(name="Message author", value=f"{message.author.mention} | {message.author.name}#{message.author.discriminator}")
+
+        if self.bot.logs_channel is not None:
+            await self.bot.logs_channel.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(Events(bot))

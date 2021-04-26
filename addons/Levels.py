@@ -30,11 +30,9 @@ class Levels(commands.Cog):
             tmp_xp = current_xp - xp_limit
 
             if tmp_xp >= 0:
-                print("Positive xp!")
                 xp = tmp_xp
                 level = current_level + 1
             elif tmp_xp < 0:
-                print("Negative xp!")
                 level = current_level - 1
                 xp_limit = cal_xp_limit(level)
                 xp = xp_limit - abs(current_xp)
@@ -42,10 +40,8 @@ class Levels(commands.Cog):
             return [level, xp, xp_limit]
 
         if amount_xp >= cur_xp_limit or amount_xp < 0:
-            print("New xp!")
             return new_xp(amount_xp, level, cur_xp_limit)
         else:
-            print("Old xp!")
             return [level, amount_xp, cur_xp_limit]
 
     @commands.command()
