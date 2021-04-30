@@ -1,9 +1,0 @@
-# Inspired by FlagBot's configuration file.
-
-token = "" # Bot's token (required to run, check discord.py's documentation for more information on running a bot)
-prefix = "!" # A prefix to call bot commands with. By default it is set to '!'
-status = "anyone who uses the prefix {} in a command.".format(prefix) # Status message for the bot. Defaults to the current set value. If the bot is a beta build, an additonal "Beta Build." part will be added.
-beta = False # Used to determine if the bot is a beta build or release build. Might be unused
-
-# This is all the configuration that I added. You can, of course, add more configuration here.
-# If in use in a real project, rename config.py.sample to config.py and configure the bot to your liking.

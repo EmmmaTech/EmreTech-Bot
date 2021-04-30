@@ -1,10 +1,16 @@
 import discord
 import json
-from addons.Helper import check_mute_expiry
+import random
+from .Helper import check_mute_expiry, hashes, handle_verify_msg
 from datetime import datetime
 from discord.ext import commands
 
 class Events(commands.Cog):
+    """
+    Just some events that happen in the server (someone joined, someone left, on a message, on a deleted message).
+    The someone joined event might be split from here in the future.
+    """
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -27,7 +33,7 @@ class Events(commands.Cog):
         if self.bot.welcome_channel is not None:
             await self.bot.welcome_channel.send(embed=embed)
 
-        elif self.bot.logs_channel is not None:
+        if self.bot.logs_channel is not None:
             await self.bot.logs_channel.send(embed=embed)
 
     @commands.Cog.listener()
@@ -41,7 +47,7 @@ class Events(commands.Cog):
         embed.description = f"{member.mention} | {member.name}#{member.discriminator}"
         
         if mute_exp != "" and not await check_mute_expiry(self.bot.mutes_dict, member):
-            embed.description += f"\nThey will automatically be remuted when they join again."
+            embed.description += "\nThey will automatically be remuted when they join again."
         
         if self.bot.logs_channel is not None:
             await self.bot.logs_channel.send(embed=embed)

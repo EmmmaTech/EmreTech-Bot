@@ -5,6 +5,10 @@ import asyncio
 import random
 
 class Fun(commands.Cog):
+    """
+    Some fun games for people to play! More are coming soon!
+    """
+
     def __init__(self, bot):
         self.bot = bot
         self.games_won = 0

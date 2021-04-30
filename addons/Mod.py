@@ -4,9 +4,13 @@ import json
 import asyncio
 from datetime import datetime, timedelta
 from discord.ext import commands
-from addons.Helper import check_mute_expiry
+from .Helper import check_mute_expiry
 
 class Moderation(commands.Cog):
+    """
+    Moderation tools only for mods and up. 
+    """
+
     def __init__(self, bot):
         self.bot = bot
         self.mute_loop = bot.loop.create_task(self.check_mute_loop())
@@ -67,7 +71,7 @@ class Moderation(commands.Cog):
         await ctx.send(f"Successfully banned user {member}!")
 
     @commands.Cog.listener()
-    async def on_member_ban(self, guild, user):
+    async def on_member_ban(self, guild: discord.Guild, user: discord.User):
         async for ban in guild.audit_logs(limit=20, action=discord.AuditLogAction.ban):
             if ban.target == user:
                 if ban.reason:
@@ -78,8 +82,10 @@ class Moderation(commands.Cog):
                 break
             else:
                 return
-        embed = discord.Embed(title=f"User {user} banned")
-        embed.description = f"{user} was banned by {admin} for the following reason:\n\n{reason}"
+        embed = discord.Embed(title=f"User banned")
+        embed.add_field(name="User Banned", value=f"{user.mention} | {user.name}#{user.discriminator}")
+        embed.add_field(name="Banned by", value=f"{admin.mention} | {admin.name}#{admin.discriminator}")
+        embed.description = f"Reason: \n```\n{reason}\n```"
 
         if self.bot.logs_channel is not None:
             await self.bot.logs_channel.send(embed=embed)
@@ -102,6 +108,15 @@ class Moderation(commands.Cog):
                 await member.kick(reason="The reason length is too long. Please check public bot logs.")
             else:
                 await member.kick(reason=reason)
+
+            embed = discord.Embed(title=f"Member kicked")
+            embed.add_field(name="Member Kicked", value=f"{member.mention} | {member.name}#{member.discriminator}")
+            embed.add_field(name="Kicked by", value=f"{ctx.author.mention} | {ctx.author.name}#{ctx.author.discriminator}")
+            embed.description = f"Reason: \n```\n{reason}\n```"
+
+            if self.bot.logs_channel is not None: 
+                await self.bot.logs_channel.send(embed=embed)
+
             await ctx.send(f"Successfully kicked user {member}!")
 
     @commands.command(pass_context=True)

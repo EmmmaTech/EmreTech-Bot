@@ -5,6 +5,10 @@ from datetime import datetime
 from discord.ext import commands
 
 class Utility(commands.Cog):
+    """
+    Useful utility commands like dming and sniping.
+    """
+
     def __init__(self, bot):
         self.bot = bot
 

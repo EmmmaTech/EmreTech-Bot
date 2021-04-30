@@ -1,4 +1,4 @@
 config.py
-Rules.txt
 **/__pycache__
 saves/**
+!saves/rules.txt

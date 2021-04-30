@@ -1,7 +1,7 @@
 import discord
 import json
 from discord.ext import commands
-from addons.Helper import restricted_to_bot_channel
+from .Helper import restricted_to_bot_channel
 
 class Levels(commands.Cog):
     """

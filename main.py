@@ -16,7 +16,7 @@ try:
     import config
 except ModuleNotFoundError:
     if "-args" not in sys.argv:
-        print("Config file is not available, and '-env' not passed. Bot cannot run. Quitting...\n")
+        print("Config file is not available, and '-args' not passed. Bot cannot run. Quitting...\n")
         exit(1)
     else:
         pass
@@ -35,9 +35,11 @@ env_run = argpar.env_args
 if env_run:
     using_env_args = True
     using_config_file = False
+    print("Using enviroment variables!")
 else:
     using_env_args = False
     using_config_file = True
+    print("Using the config file!")
 
 # Discord Bot setup
 status = discord.Activity(type=discord.ActivityType.watching)
@@ -46,14 +48,20 @@ if using_config_file:
     if not config.beta:
         status.name = config.status
     else:
-        status.name = config.status + " Beta build."
+        if config.status.endswith( ('.', '!', '?', ' ') ):
+            status.name = config.status + " Beta build."
+        else:
+            status.name = config.status + ". Beta build."
     token = config.token
 elif using_env_args:
     prefix = os.getenv("PREFIX")
     if not bool(os.getenv("BETA")):
         status.name = os.getenv("STATUS")
     else:
-        status.name = os.getenv("STATUS") + " Beta build."
+        if os.getenv("STATUS").endswith( ('.', '!', '?', ' ') ):
+            status.name = os.getenv("STATUS") + " Beta build."
+        else:
+            status.name = os.getenv("STATUS") + ". Beta build."
     token = os.getenv("TOKEN")
 
 intents = discord.Intents.all()
@@ -71,6 +79,31 @@ elif using_env_args:
 bot.deleted_dict = {} # For deleted messages
 emretechofficialserver_id = 816810434811527198
 
+if using_config_file:
+    bot.rules_file = config.rules_file
+    rules_channel = config.rules_channel
+    logs_channel = config.logs_channel
+    welcome_channel = config.welcome_channel
+    bot_channel = config.bot_channel
+
+    mute_role = config.mute_role
+    admin_role = config.admin_role
+    mod_role = config.mod_role
+
+    bot.using_mod_forms = config.using_mod_forms
+elif using_env_args:
+    bot.rules_file = os.getenv("RULES_FILE")
+    rules_channel = int(os.getenv("RULES_CHANNEL"))
+    logs_channel = int(os.getenv("LOGS_CHANNEL"))
+    welcome_channel = int(os.getenv("WELCOME_CHANNEL"))
+    bot_channel = int(os.getenv("BOT_CHANNEL"))
+
+    mute_role = int(os.getenv("MUTE_ROLE"))
+    admin_role = int(os.getenv("ADMIN_ROLE"))
+    mod_role = int(os.getenv("MOD_ROLE"))
+
+    bot.using_mod_forms = bool(os.getenv("USING_MOD_FORMS"))
+
 # Setup files
 dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path) # To ensure the current directory is at the project root
@@ -86,9 +119,14 @@ def load_from_file(fpath: str, data: dict = {}):
     with open(fpath, "r") as f:
         return json.load(f)
 
+    print(f"File {fpath} content's have been loaded!")
+
 bot.warns_dict = load_from_file("saves/warns.json")
 bot.mutes_dict = load_from_file("saves/mutes.json")
 bot.levels_dict = load_from_file("saves/levels.json")
+
+if bot.using_mod_forms:
+    bot.mod_form_answers = load_from_file("saves/mod-form-answers.json")
 
 # Discord Bot events
 @bot.event
@@ -114,7 +152,8 @@ async def on_command_error(ctx: commands.Context, error):
                     embed.description = "Error trace is too long to put here. If you have access to the Terminal running me (the bot), check there."
                 else:
                     embed.description = f"```\n{error_trace}\n```"
-                bot.logs_channel.send(embed=embed)
+                if bot.logs_channel is not None:
+                    bot.logs_channel.send(embed=embed)
             except:
                 pass
 
@@ -130,15 +169,32 @@ async def on_error(event_method, *args, **kwargs):
 async def on_ready():
     for guild in bot.guilds:
         try:
-            # This if statement is for configuring on EmreTech's Official Server. Feel free to customize for your own bot in your own server.
-            if guild.id == emretechofficialserver_id:
+            if guild.id in config.whitelisted_servers:
                 bot.guild = guild
-                bot.logs_channel = discord.utils.get(guild.channels, id=816829037896269824)
-                bot.bot_channel = discord.utils.get(guild.channels, id=816831538926190662)
-                bot.admin_role = discord.utils.get(guild.roles, id=816811491550429224)
-                bot.moderator_role = discord.utils.get(guild.roles, id=816811731997163580)
-                bot.mute_role = discord.utils.get(guild.roles, id=834471539314393109)
-                bot.protected_roles = (discord.utils.get(guild.roles, id=816810865520279565), bot.admin_role, bot.moderator_role)
+
+                bot.rules_channel = discord.utils.get(guild.channels, id=rules_channel)
+                bot.logs_channel = discord.utils.get(guild.channels, id=logs_channel)
+                bot.welcome_channel = discord.utils.get(guild.channels, id=welcome_channel)
+                bot.bot_channel = discord.utils.get(guild.channels, id=bot_channel)
+
+                bot.mute_role = discord.utils.get(guild.roles, id=mute_role)
+                bot.admin_role = discord.utils.get(guild.roles, id=admin_role)
+                bot.moderator_role = discord.utils.get(guild.roles, id=mod_role)
+
+                if guild.id == emretechofficialserver_id:
+                    bot.protected_roles = (discord.utils.get(guild.roles, id=816810865520279565), bot.admin_role, bot.moderator_role)
+            else:
+                try:
+                    await guild.owner.send(f"Left your server, `{guild.name}`, as under this token, this bot should only be used in ETOS (EmreTech's Official Server).")
+                    await guild.owner.send('If you would like to use a bot with the same code as me, clone or fork me on [GitHub]("https://github.com/EmreTech/EmreTech-Bot").')
+                except discord.Forbidden:
+                    for channel in guild.channels:
+                        if guild.me.permissions_in(channel).send_messages and isinstance(channel, discord.TextChannel):
+                            await channel.send(f"Left your server, as under this token, this bot should only be used in ETOS (EmreTech's Official Server).")
+                            await channel.send('If you would like to use a bot with the same code as me, clone or fork me on [GitHub]("https://github.com/EmreTech/EmreTech-Bot").')
+                            break
+                finally:
+                    await guild.leave()
 
             try:
                 with open("restart.txt", "r") as fil:
@@ -219,6 +275,6 @@ try:
     bot.run(token)
 except aiohttp.ClientConnectorCertificateError:
     print("Unable to connect to discord.com due to a SSL Certificate error.")
-except SystemExit: # For some reason, Python throws an exception if a SystemExit happens.
-    pass # Since it's intentional (i.e. someone runs the restart command), we don't really care.
+except SystemExit:
+    exit(0) # Just to prevent the SystemExit exception
 # Add any suggestions for more exceptions to put here
