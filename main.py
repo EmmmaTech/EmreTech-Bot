@@ -153,7 +153,7 @@ async def on_command_error(ctx: commands.Context, error):
                 else:
                     embed.description = f"```\n{error_trace}\n```"
                 if bot.logs_channel is not None:
-                    bot.logs_channel.send(embed=embed)
+                    await bot.logs_channel.send(embed=embed)
             except:
                 pass
 

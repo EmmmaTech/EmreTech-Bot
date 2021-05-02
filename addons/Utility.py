@@ -1,6 +1,9 @@
 import discord
 import os
 import json
+import urllib.request
+import urllib.parse
+import re
 from datetime import datetime
 from discord.ext import commands
 
@@ -85,6 +88,19 @@ class Utility(commands.Cog):
             return await ctx.send(f"The message is too long to send. The message's length is {len(content)}.")
 
         await channel.send(content)
+
+    @commands.command()
+    async def search_yt(self, ctx: commands.Context, videoNum: int, *, searchRes: str):
+        """Searchs for a YouTube video."""
+        # Spaces and some other characters aren't allowed in url links. They are encoded with urllib.
+        encoded_search_res = urllib.parse.quote(searchRes)
+        htm = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={encoded_search_res}")
+        video_id = re.findall(r"watch\?v=(\S{11})", htm.read().decode())
+        
+        try:
+            await ctx.send(f"https://www.youtube.com/watch?v={video_id[videoNum]}")
+        except KeyError:
+            await ctx.send(f"Error: video at {videoNum} index doesn't exist.")
 
 def setup(bot):
     bot.add_cog(Utility(bot))
