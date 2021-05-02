@@ -77,7 +77,7 @@ class Fun(commands.Cog):
 
         try:
             response = await self.bot.wait_for('message', check=checker, timeout=15.0)
-            player_choice = response.content
+            player_choice = response.content.lower()
         except asyncio.TimeoutError:
             self.games_lost += 1
             return await ctx.send('Sorry, you took too long. This counts as loosing a game.')
@@ -88,6 +88,25 @@ class Fun(commands.Cog):
 
         await ctx.send('{}'.format(result))
     
+    @commands.command(aliases=['dice', 'roll-dice'])
+    async def roll(self, ctx: commands.Context):
+        """Rolls a dice. Nothing else."""
+        num = random.randint(0, 6)
+        await ctx.send(f"You rolled {num}!")
+
+    @commands.command(ailases=['coin', 'flip-coin'])
+    async def flip(self, ctx: commands.Context):
+        """Flips a coin. Nothing else."""
+        num = int(round(random.random()))
+
+        if num == 0:
+            side = "Heads"
+        else:
+            side = "Tails"
+
+        await ctx.send(f"You fliped {side}!")
+
+
     @commands.command()
     async def status(self, ctx: commands.Context):
         """Tells the player how many games they won/lost"""
