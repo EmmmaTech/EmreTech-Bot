@@ -89,14 +89,14 @@ class Utility(commands.Cog):
 
         await channel.send(content)
 
-    @commands.command()
+    @commands.command(aliases=['yt', 'search'])
     async def search_yt(self, ctx: commands.Context, videoNum: int, *, searchRes: str):
         """Searchs for a YouTube video."""
         # Spaces and some other characters aren't allowed in url links. They are encoded with urllib.
         encoded_search_res = urllib.parse.quote(searchRes)
         htm = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={encoded_search_res}")
         video_id = re.findall(r"watch\?v=(\S{11})", htm.read().decode())
-        
+
         try:
             await ctx.send(f"https://www.youtube.com/watch?v={video_id[videoNum]}")
         except KeyError:

@@ -36,7 +36,7 @@ class Math(commands.Cog):
         Calculates an expression using the eval function.
         """
         answer = eval(exp)
-        await ctx.send("Your answe is {}.".format(answer))
+        await ctx.send("Your answer is {}.".format(answer))
 
 def setup(bot):
     bot.add_cog(Math(bot))

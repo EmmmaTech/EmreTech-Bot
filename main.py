@@ -125,9 +125,6 @@ bot.warns_dict = load_from_file("saves/warns.json")
 bot.mutes_dict = load_from_file("saves/mutes.json")
 bot.levels_dict = load_from_file("saves/levels.json")
 
-if bot.using_mod_forms:
-    bot.mod_form_answers = load_from_file("saves/mod-form-answers.json")
-
 # Discord Bot events
 @bot.event
 async def on_command_error(ctx: commands.Context, error):
@@ -220,6 +217,9 @@ cogs = [
     'addons.Mod',
     'addons.Levels'
 ]
+
+if bot.using_mod_forms:
+    cogs.append('addons.ModForms')
 
 failed_cogs = []
 

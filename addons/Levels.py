@@ -1,5 +1,6 @@
 import discord
 import json
+import math
 from discord.ext import commands
 from .Helper import restricted_to_bot_channel
 
@@ -20,29 +21,27 @@ class Levels(commands.Cog):
         Returns a list with the new level, xp, and xp limit.
         """
 
-        cal_xp_limit = lambda lev : 500 * ((lev + 1) * 2)
+        cal_xp_limit = lambda lev : 1000 * (lev + 1)
 
         if cur_xp_limit == 0:
             cur_xp_limit = cal_xp_limit(level)
 
-        def new_xp(current_xp: int, current_level: int, cur_xp_lim: int):
-            xp_limit = cal_xp_limit(current_level)
-            tmp_xp = current_xp - xp_limit
+        xp_fraction = amount_xp / cur_xp_limit
 
-            if tmp_xp >= 0:
-                xp = tmp_xp
-                level = current_level + 1
-            elif tmp_xp < 0:
-                level = current_level - 1
-                xp_limit = cal_xp_limit(level)
-                xp = xp_limit - abs(current_xp)
+        if xp_fraction >= 0:
+            new_level = level + math.floor(xp_fraction)
+            xp_limit = cal_xp_limit(new_level)
+            xp = amount_xp - cur_xp_limit
 
-            return [level, xp, xp_limit]
-
-        if amount_xp >= cur_xp_limit or amount_xp < 0:
-            return new_xp(amount_xp, level, cur_xp_limit)
+            if xp < 0:
+                xp = amount_xp
         else:
-            return [level, amount_xp, cur_xp_limit]
+            new_level = level - math.ceil(xp_fraction)
+            xp_limit = cal_xp_limit(new_level)
+            xp = amount_xp + xp_limit
+
+        return [new_level, xp, xp_limit]
+
 
     @commands.command()
     @commands.has_any_role("Mods")
