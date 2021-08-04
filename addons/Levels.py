@@ -1,6 +1,7 @@
 import discord
 import json
 import math
+from datetime import datetime, timedelta
 from discord.ext import commands
 from .Helper import restricted_to_bot_channel
 
@@ -14,6 +15,10 @@ class Levels(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+    
+    def writeToLevelFile(self):
+        with open("saves/levels.json", 'w') as f:
+            json.dump(self.bot.levels_dict, f)
 
     async def level_up(self, message: discord.Message, user: discord.Member):
         xp = self.bot.levels_dict[f'{user.id}']["xp"]
@@ -26,30 +31,32 @@ class Levels(commands.Cog):
         elif lvl_start > lvl_end:
             self.bot.levels_dict[f'{user.id}']["level"] = lvl_end
 
+        self.writeToLevelFile()
+
     async def add_xp_base(self, user: discord.Member, amount_xp: int):
         if not f'{user.id}' in self.bot.levels_dict:
             self.bot.levels_dict[f'{user.id}'] = {}
             self.bot.levels_dict[f'{user.id}']["xp"] = 0
             self.bot.levels_dict[f'{user.id}']["level"] = 0
+            self.bot.levels_dict[f'{user.id}']["cooldown"] = ""
         
         self.bot.levels_dict[f'{user.id}']["xp"] += amount_xp
 
-        with open("saves/levels.json", 'w') as f:
-            json.dump(self.bot.levels_dict, f)
+        self.writeToLevelFile()
 
     async def remove_xp_base(self, user: discord.Member, amount_xp: int):
         if not f'{user.id}' in self.bot.levels_dict:
             self.bot.levels_dict[f'{user.id}'] = {}
             self.bot.levels_dict[f'{user.id}']["xp"] = 0
             self.bot.levels_dict[f'{user.id}']["level"] = 0
+            self.bot.levels_dict[f'{user.id}']["cooldown"] = ""
             return None
 
         self.bot.levels_dict[f'{user.id}']["xp"] -= amount_xp
         if self.bot.levels_dict[f'{user.id}']["xp"] < 0:
             self.bot.levels_dict[f'{user.id}']["xp"] = 0
 
-        with open("saves/levels.json", 'w') as f:
-            json.dump(self.bot.levels_dict, f)
+        self.writeToLevelFile()
 
     @commands.command()
     @commands.has_any_role("Mods")
@@ -68,8 +75,36 @@ class Levels(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot == False:
-            await self.add_xp_base(message.author, 2)
-            await self.level_up(message, message.author)
+            try:
+                cooldown_str = self.bot.levels_dict[f'{message.author.id}']["cooldown"]
+
+                if cooldown_str == "":
+                    await self.add_xp_base(message.author, 2)
+                    await self.level_up(message, message.author)
+
+                    cur_time = datetime.utcnow()
+                    diff = timedelta(minutes=1, seconds=30)
+                    end_cooldown = cur_time + diff
+                    end_cooldown_str = end_cooldown.strftime("%Y-%m-%d %H:%M:%S")
+                    self.bot.levels_dict[f'{message.author.id}']["cooldown"] = end_cooldown_str
+                    self.writeToLevelFile()
+                    return
+
+                diff = datetime.strptime(cooldown_str, "%Y-%m-%d %H:%M:%S") - datetime.utcnow()
+                if diff.total_seconds() < 0:
+                    await self.add_xp_base(message.author, 2)
+                    await self.level_up(message, message.author)
+
+                    cur_time = datetime.utcnow()
+                    diff = timedelta(minutes=1)
+                    end_cooldown = cur_time + diff
+                    end_cooldown_str = end_cooldown.strftime("%Y-%m-%d %H:%M:%S")
+                    self.bot.levels_dict[f'{message.author.id}']["cooldown"] = end_cooldown_str
+                    self.writeToLevelFile()
+
+            except KeyError:
+                self.bot.levels_dict[f'{message.author.id}']["cooldown"] = ""
+                self.writeToLevelFile()
 
     @commands.command()
     @restricted_to_bot_channel
