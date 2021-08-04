@@ -1,6 +1,6 @@
 # EmreTech-Bot
 
-A Discord Bot, made with discord.py in Python. Rewrite based by FlagBot Discord Bot.
+A "generic" Discord Bot, made with discord.py in Python. Rewrite based on the FlagBot Discord Bot.
 
 # Credits
 

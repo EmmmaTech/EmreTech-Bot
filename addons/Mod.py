@@ -27,7 +27,7 @@ class Moderation(commands.Cog):
                     continue
 
                 is_expired = await check_mute_expiry(self.bot.mutes_dict, member)
-                if not is_expired or self.bot.mutes_dict[str(member.id)] == "":
+                if (type(is_expired) == bool and not is_expired) or self.bot.mutes_dict[str(member.id)] == "":
                     continue
                 await member.remove_roles(self.bot.mute_role)
                 self.bot.mutes_dict[str(member.id)] = ""
@@ -55,8 +55,9 @@ class Moderation(commands.Cog):
             pass
 
         try:
-            await member.send(f"You were banned from {self.bot.guild.name} for \n\n`{reason}`"
-            f"\n\nIf you believe this is a mistake, please contact the Admins/Moderators of {ctx.guild.name}.")
+            #await member.send(f"You were banned from {self.bot.guild.name} for \n\n`{reason}`"
+            #f"\n\nIf you believe this is a mistake, please contact the Admins/Moderators of {ctx.guild.name}.")
+            await member.send(discord.Embed(title=f"You were banned from {self.bot.guild.name}", description=f"Reason:\n\n`{reason}`"))
         except discord.Forbidden:
             pass
 
@@ -100,8 +101,9 @@ class Moderation(commands.Cog):
             return await ctx.send("You cannot kick a protected user for obvious reasons.")
         else:
             try:
-                await member.send(f"You were kicked from {self.bot.guild.name} for: \n\n`{reason}`"
-                f"\n\nIf you believe this is a mistake, you can rejoin the Discord Server.")
+                #await member.send(f"You were kicked from {self.bot.guild.name} for: \n\n`{reason}`"
+                #f"\n\nIf you believe this is a mistake, you can rejoin the Discord Server.")
+                await member.send(discord.Embed(title=f"You were kicked from {self.bot.guild.name}", description=f"Reason:\n\n`{reason}`"))
             except discord.Forbidden:
                 pass
             if len(reason) > 512:
@@ -155,14 +157,15 @@ class Moderation(commands.Cog):
             json.dump(self.bot.mutes_dict, f, indent=4)
         
         try:
-            await member.send(f"You were muted on {self.bot.guild.name} for:\n\n`{reason}`")
+            #await member.send(f"You were muted on {self.bot.guild.name} for:\n\n`{reason}`")
+            await member.send(embed=discord.Embed(title=f"You were muted on {self.bot.guild.name}", description=f"Reason:\n\n`{reason}`"))
         except discord.Forbidden:
             pass
         await ctx.send(f"Successfully muted {member}!")
 
     @commands.command()
     @commands.has_any_role("Mods")
-    async def unmute(self, ctx: commands.Context, member: discord.Member, *, reason="No reason given."):
+    async def unmute(self, ctx: commands.Context, member: discord.Member):
         """Unmutes a user."""
         if member == ctx.message.author or any(r for r in self.bot.protected_roles if r in member.roles):
             return await ctx.send(f"I wonder how {member.mention} got muted...")
@@ -182,7 +185,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="tmute")
     @commands.has_any_role("Mods")
-    async def timemute(self, ctx: commands.Context, member: discord.Member, duration, reason="No reason given."):
+    async def timemute(self, ctx: commands.Context, member: discord.Member, duration, *, reason="No reason given."):
         """Timemutes a user with units s, m, h, and d."""
         if member == ctx.message.author:
             return await ctx.send("You cannot mute yourself for obvious reasons.")
@@ -219,7 +222,8 @@ class Moderation(commands.Cog):
             json.dump(self.bot.mutes_dict, f, indent=4)
 
         try:
-            await member.send(f"You were muted on {self.bot.guild.name} for:\n\n`{reason}`\n\nYou will be unmuted on {end_str}.")
+            #await member.send(f"You were muted on {self.bot.guild.name} for:\n\n`{reason}`\n\nYou will be unmuted on {end_str}.")
+            await member.send(embed=discord.Embed(title=f"You were muted on {self.bot.guild.name}", description=f"Reason:\n\n`{reason}`\n\nYou will be unmuted on {end_str}."))
         except discord.Forbidden:
             pass
         await ctx.send(f"Successfully muted {member} until `{end_str}` in UTC time!")

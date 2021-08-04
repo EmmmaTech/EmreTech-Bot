@@ -49,12 +49,12 @@ class Utility(commands.Cog):
     async def snipe(self, ctx: commands.Context):
         """Finds the latest deleted message. 
         Inspired by Mewdeko's snipe function."""
-        cur_time = datetime.utcnow()
-        recent_index = self.bot.deleted_dict[list(self.bot.deleted_dict.keys())[0]]
-        first_elem = recent_index["date"]
-        temp = abs(cur_time - datetime.strptime(first_elem, "%Y-%m-%d %H:%M:%S")).seconds
-
         try:
+            cur_time = datetime.utcnow()
+            recent_index = self.bot.deleted_dict[list(self.bot.deleted_dict.keys())[0]]
+            first_elem = recent_index["date"]
+            temp = abs(cur_time - datetime.strptime(first_elem, "%Y-%m-%d %H:%M:%S")).seconds
+
             for i in self.bot.deleted_dict.keys():
                 dt_from_msg = self.bot.deleted_dict[i]["date"]
                 if (abs(cur_time - datetime.strptime(dt_from_msg, "%Y-%m-%d %H:%M:%S")).seconds) < temp:
@@ -73,8 +73,7 @@ class Utility(commands.Cog):
             embed.description = f"Message contents: \n```\n{content}\n```"
 
             await ctx.send(embed=embed)
-
-        except (KeyError, ValueError):
+        except (KeyError, ValueError, IndexError):
             await ctx.send("You cannot snipe if there are no deleted messages!")
 
     @commands.command(aliases=['sab'])

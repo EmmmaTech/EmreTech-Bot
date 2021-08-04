@@ -183,12 +183,12 @@ async def on_ready():
             else:
                 try:
                     await guild.owner.send(f"Left your server, `{guild.name}`, as under this token, this bot should only be used in ETOS (EmreTech's Official Server).")
-                    await guild.owner.send('If you would like to use a bot with the same code as me, clone or fork me on [GitHub]("https://github.com/EmreTech/EmreTech-Bot").')
+                    await guild.owner.send('If you would like to use a bot with the same code as me, clone or fork me on https://github.com/EmreTech/EmreTech-Bot.')
                 except discord.Forbidden:
                     for channel in guild.channels:
                         if guild.me.permissions_in(channel).send_messages and isinstance(channel, discord.TextChannel):
                             await channel.send(f"Left your server, as under this token, this bot should only be used in ETOS (EmreTech's Official Server).")
-                            await channel.send('If you would like to use a bot with the same code as me, clone or fork me on [GitHub]("https://github.com/EmreTech/EmreTech-Bot").')
+                            await channel.send('If you would like to use a bot with the same code as me, clone or fork me on https://github.com/EmreTech/EmreTech-Bot.')
                             break
                 finally:
                     await guild.leave()
@@ -273,8 +273,5 @@ async def restart(ctx: commands.Context):
 # Running the bot
 try:
     bot.run(token)
-except aiohttp.ClientConnectorCertificateError:
-    print("Unable to connect to discord.com due to a SSL Certificate error.")
 except SystemExit:
     exit(0) # Just to prevent the SystemExit exception
-# Add any suggestions for more exceptions to put here

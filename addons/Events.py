@@ -53,16 +53,6 @@ class Events(commands.Cog):
             await self.bot.logs_channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        # Auto ban if someone pings 20+ times in one message
-        if len(message.mentions) > 20:
-            await message.delete()
-            await message.author.ban()
-            return await message.channel.send(f"{message.author} was banned for mass pinging (auto bans of mass pinging is 20+).")
-
-        # TODO: When a user sends a message, they will gain xp. If they post another message within 1.5 minutes of the last message, they won't get any xp.
-
-    @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
         date_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
