@@ -80,7 +80,7 @@ bot.deleted_dict = {} # For deleted messages
 emretechofficialserver_id = 816810434811527198
 
 if using_config_file:
-    bot.rules_file = config.rules_file
+    #bot.rules_file = config.rules_file
     rules_channel = config.rules_channel
     logs_channel = config.logs_channel
     welcome_channel = config.welcome_channel
@@ -89,10 +89,11 @@ if using_config_file:
     mute_role = config.mute_role
     admin_role = config.admin_role
     mod_role = config.mod_role
+    verified_role = config.verified_role
 
     bot.using_mod_forms = config.using_mod_forms
 elif using_env_args:
-    bot.rules_file = os.getenv("RULES_FILE")
+    #bot.rules_file = os.getenv("RULES_FILE")
     rules_channel = int(os.getenv("RULES_CHANNEL"))
     logs_channel = int(os.getenv("LOGS_CHANNEL"))
     welcome_channel = int(os.getenv("WELCOME_CHANNEL"))
@@ -101,6 +102,7 @@ elif using_env_args:
     mute_role = int(os.getenv("MUTE_ROLE"))
     admin_role = int(os.getenv("ADMIN_ROLE"))
     mod_role = int(os.getenv("MOD_ROLE"))
+    verified_role = int(os.getenv("VERIFIED_ROLE"))
 
     bot.using_mod_forms = bool(os.getenv("USING_MOD_FORMS"))
 
@@ -177,8 +179,10 @@ async def on_ready():
                 bot.mute_role = discord.utils.get(guild.roles, id=mute_role)
                 bot.admin_role = discord.utils.get(guild.roles, id=admin_role)
                 bot.moderator_role = discord.utils.get(guild.roles, id=mod_role)
+                bot.verified_roles = discord.utils.get(guild.roles, id=verified_role)
 
                 if guild.id == emretechofficialserver_id:
+                    bot.verify_channel = discord.utils.get(guild.channels, id=872761964118552576)
                     bot.protected_roles = (discord.utils.get(guild.roles, id=816810865520279565), bot.admin_role, bot.moderator_role)
             else:
                 try:
@@ -215,7 +219,9 @@ cogs = [
     'addons.Fun',
     'addons.Utility',
     'addons.Mod',
-    'addons.Levels'
+    'addons.Levels',
+    'addons.Warns',
+    'addons.Verify'
 ]
 
 if bot.using_mod_forms:
@@ -270,8 +276,25 @@ async def restart(ctx: commands.Context):
         fil.write(str(ctx.channel.id))
     sys.exit(0)
 
+@bot.command(hidden=True)
+async def reload(ctx: commands.Context, *, module):
+    if ctx.author == ctx.guild.owner or ctx.author == bot.admin_role or ctx.author == bot.moderator_role:
+        try:
+            bot.unload_extension(f"addons.{module}")
+            bot.load_extension(f"addons.{module}")
+        except Exception as e:
+            await ctx.send(f":anger: Error while attemping to reload the extension.\n```\n{type(e).__name__}: {e}\n```")
+        else:
+            await ctx.send(":white_check_mark: Extension successfully reloaded.")
+    else:
+        raise commands.CheckFailure()
+
+@bot.command()
+async def ping(ctx: commands.Context):
+    """Get the ping time of the bot"""
+    ping = bot.latency * 1000
+    ping = round(ping, 3)
+    await ctx.send(f"🏓 Pong! Response time is {ping} milliseconds.")
+
 # Running the bot
-try:
-    bot.run(token)
-except SystemExit:
-    exit(0) # Just to prevent the SystemExit exception
+bot.run(token)

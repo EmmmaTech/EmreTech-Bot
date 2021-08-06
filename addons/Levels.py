@@ -18,7 +18,7 @@ class Levels(commands.Cog):
     
     def writeToLevelFile(self):
         with open("saves/levels.json", 'w') as f:
-            json.dump(self.bot.levels_dict, f)
+            json.dump(self.bot.levels_dict, f, indent=4)
 
     async def level_up(self, message: discord.Message, user: discord.Member):
         xp = self.bot.levels_dict[f'{user.id}']["xp"]

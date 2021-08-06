@@ -1,6 +1,9 @@
 import discord
 import functools
 import hashlib, hmac
+import urllib.request
+import urllib.parse
+import json
 from datetime import datetime
 from discord.ext import commands
 
@@ -36,7 +39,10 @@ def restricted_to_bot_channel(func):
                 return await ctx.send(f"{ctx.author.mention} This command can only be used in {func_self.bot.bot_channel.mention}.")
             await func(*args, **kwargs)
         except:
-            await ctx.send(f"{ctx.author.mention} This command can only be used in the bot channel.")
+            if ctx.author in (func_self.bot.protected_roles):
+                await func(*args, **kwargs)
+            else:
+                return await ctx.send(f"{ctx.author.mention} This command can only be used in the bot channel.")
     return wrapper
 
 def restricted_to_level(requiredLevel: int):
@@ -86,24 +92,30 @@ async def check_mute_expiry(mutes_dict: dict, member: discord.User):
     diff = end_time - datetime.utcnow()
     return diff.total_seconds() < 0
 
-async def handle_verify_msg(ctx: commands.Context, hash: str, hash_used: str):
+async def handle_verify_msg(author: discord.Member, user_hash: str, hash_used: str):
     """
     Handles the verify message, where the hash used is random.
-    This checks if the provided hash matches the hash of their name and discrimator.
+    This checks if the provided hash matches the hash of their name and discriminator.
     """
 
-    if hash_used.lower() not in hashes:
-        await ctx.send("The provided hash is not in the compatiable list of hashes.")
+    full = (author.name + "#" + author.discriminator).encode('utf8')
 
-    author_name    = ctx.author.name
-    author_discrim = ctx.author.discrimator
-    full = (author_name + "#" + author_discrim).encode('utf8')
-
-    env = {
-        "string": full
-    }
+    env = {"string": full}
     env.update(globals())
 
     # A method I "came up with myself" to save codespace. I was originally going to use if-elif-else statements to do this same thing!
     our_hash = eval(f"hashlib.{hash_used}(string)", env)
-    return hmac.compare_digest(our_hash.hexdigest(), hash)
+    return hmac.compare_digest(our_hash.hexdigest().lower(), user_hash.lower())
+
+def get_title_from_youtube_video(id: str):
+    params = {
+        "format": "json",
+        "url": f"https://www.youtube.com/watch?v={id}"
+    }
+    query_string = urllib.parse.urlencode(params)
+    url = f"https://www.youtube.com/oembed?{query_string}"
+
+    with urllib.request.urlopen(url) as response:
+        res_text = response.read()
+        data = json.loads(res_text.decode())
+        return data["title"]

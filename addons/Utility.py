@@ -6,6 +6,7 @@ import urllib.parse
 import re
 from datetime import datetime
 from discord.ext import commands
+from .Helper import get_title_from_youtube_video
 
 class Utility(commands.Cog):
     """
@@ -21,7 +22,7 @@ class Utility(commands.Cog):
         if member == ctx.me:
             return await ctx.send("You cannot send a DM to me!")
         try:
-            await member.send(embed=discord.Embed(title=f"DM sent to you by {member.name}#{member.discriminator}!", description=content))
+            await member.send(embed=discord.Embed(title=f"DM sent to you by {ctx.author.name}#{ctx.author.discriminator}!", description=content))
         except discord.Forbidden:
             return await ctx.send("Failed to send DM to the user. They might have blocked me or aren't accepting DMs. 😢")
 
@@ -32,18 +33,10 @@ class Utility(commands.Cog):
         if member == ctx.me:
             return await ctx.send("You cannot send a help ticket to me!")
         try:
-            await member.send(embed=discord.Embed(title=f"Help ticket sent to you by {member.name}#{member.discriminator}!", description="Ticket Request:\n" + content))
+            await member.send(embed=discord.Embed(title=f"Help ticket sent to you by {ctx.author.name}#{ctx.author.discriminator}!", description="Ticket Request:\n" + content))
         except discord.Forbidden:
             return await ctx.send("Failed to send the Help ticket to the user. They might have blocked me or aren't accepting DMs. 😢")
         await ctx.send("Don't worry! Help is on the way!")
-
-    @commands.command()
-    async def rules(self, ctx: commands.Context):
-        """Prints out all the rules."""
-        if os.path.exists("saves/rules.txt"):
-            with open("saves/rules.txt", "r") as fil:
-                rules = fil.read()
-            await ctx.send(f"Here are the rules: \n```\n{rules}\n```")
 
     @commands.command()
     async def snipe(self, ctx: commands.Context):
@@ -89,17 +82,47 @@ class Utility(commands.Cog):
         await channel.send(content)
 
     @commands.command(aliases=['yt', 'search'])
-    async def search_yt(self, ctx: commands.Context, videoNum: int, *, searchRes: str):
+    async def search_yt(self, ctx: commands.Context, searchRes: str, videoNum: int = -1):
         """Searchs for a YouTube video."""
         # Spaces and some other characters aren't allowed in url links. They are encoded with urllib.
         encoded_search_res = urllib.parse.quote(searchRes)
         htm = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={encoded_search_res}")
         video_id = re.findall(r"watch\?v=(\S{11})", htm.read().decode())
 
-        try:
-            await ctx.send(f"https://www.youtube.com/watch?v={video_id[videoNum]}")
-        except KeyError:
-            await ctx.send(f"Error: video at {videoNum} index doesn't exist.")
+        if videoNum > -1:
+            try:
+                await ctx.send(f"https://www.youtube.com/watch?v={video_id[videoNum]}")
+            except KeyError:
+                await ctx.send(f"Error: video at {videoNum} index doesn't exist.")
+        else:
+            embed = discord.Embed()
+            embed.title = f"Search results for {searchRes} (goes up to 20 videos)"
+            embed.description = "```\n"
+
+            itr = len(video_id)
+            if itr > 20: itr = 20
+
+            for i in range(itr):
+                embed.description += f"{i}: {get_title_from_youtube_video(video_id[i])}\n"
+
+            embed.description += "```"
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_any_role("Mods")
+    async def purge(self, ctx: commands.Context, numOfMessages: int, silent: bool = False):
+        """Purges a bulk of messages all at once. Restricted to mods and above."""
+        if numOfMessages < 1:
+            return await ctx.send("The amount of messages to delete is lower than 1!")
+        elif numOfMessages > 99:
+            return await ctx.send("The amount of messages to delete is greater than 99!")
+
+        def check(m):
+            return True
+
+        deleted = await ctx.channel.purge(limit=numOfMessages+1, check=check, bulk=True)
+        if not silent:
+            await ctx.send(f"Successfully deleted {len(deleted)} message(s)!")
 
 def setup(bot):
     bot.add_cog(Utility(bot))

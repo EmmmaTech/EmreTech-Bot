@@ -13,9 +13,10 @@ logs_channel    = 000000000000000000 # Logs channel for logging moderator stuff.
 welcome_channel = 000000000000000000 # Welcome channel for sending welcome messages.
 bot_channel     = 000000000000000000 # Bot channel for requiring certain commands inside of it only.
 
-mute_role  = 000000000000000000 # Mute role for muting/unmuting a user.
-admin_role = 000000000000000000 # Admin role
-mod_role   = 000000000000000000 # Moderator role
+mute_role     = 000000000000000000 # Mute role for muting/unmuting a user.
+admin_role    = 000000000000000000 # Admin role
+mod_role      = 000000000000000000 # Moderator role
+verified_role = 000000000000000000 # Verified role
 
 using_mod_forms = True
 
